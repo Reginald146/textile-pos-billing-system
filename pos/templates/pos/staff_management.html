@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Management | Textile POS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark px-3">
+    <a class="navbar-brand" href="{% url 'dashboard' %}">Textile POS</a>
+    <a class="btn btn-outline-light btn-sm" href="{% url 'logout' %}">Logout</a>
+</nav>
+
+<main class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h2>Staff Management</h2>
+            <p class="text-secondary mb-0">Create and manage staff accounts.</p>
+        </div>
+        <a href="{% url 'dashboard' %}" class="btn btn-dark">Back to Dashboard</a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h5 class="mb-3">Create Staff Account</h5>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label" for="full_name">Full Name</label>
+                    <input type="text" id="full_name" name="full_name"
+                           class="form-control" maxlength="150"
+                           placeholder="Enter staff member's name" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" id="username" name="username"
+                           class="form-control" maxlength="150"
+                           placeholder="Choose a unique username" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" name="password"
+                           class="form-control" minlength="8"
+                           placeholder="At least 8 characters" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Create Staff Account
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h5 class="mb-3">Staff Accounts</h5>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Name</th>
+                            <th>Username</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    
+<tbody>
+    {% for member in staff_members %}
+        <tr>
+            <td>{{ member.get_full_name|default:member.username }}</td>
+            <td>{{ member.username }}</td>
+            <td>
+                {% if member.is_active %}
+                    <span class="badge bg-success">Active</span>
+                {% else %}
+                    <span class="badge bg-secondary">Inactive</span>
+                {% endif %}
+            </td>
+            <td>
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="staff_id" value="{{ member.id }}">
+
+                    {% if member.is_active %}
+                        <input type="hidden" name="action" value="deactivate">
+                        <button type="submit" class="btn btn-sm btn-danger"
+                                onclick="return confirm('Deactivate this staff account?')">
+                            Deactivate
+                        </button>
+                    {% else %}
+                        <input type="hidden" name="action" value="activate">
+                        <button type="submit" class="btn btn-sm btn-success">
+                            Reactivate
+                        </button>
+                    {% endif %}
+                </form>
+            </td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="4" class="text-center text-secondary py-4">
+                No staff accounts created yet.
+            </td>
+        </tr>
+    {% endfor %}
+</tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

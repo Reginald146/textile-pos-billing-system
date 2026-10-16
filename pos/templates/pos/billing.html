@@ -1,0 +1,93 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Billing - Textile POS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>New Bill</h2>
+        {% if user.is_superuser %}
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Dashboard</a>
+{% else %}
+    <a href="{% url 'billing' %}" class="btn btn-outline-secondary">Billing</a>
+{% endif %}
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-warning">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% if products %}
+    <form method="post" action="{% url 'create_sale' %}">
+        {% csrf_token %}
+        <div class="card p-3 mb-3">
+            <label class="form-label">Customer Name (optional)</label>
+            <input type="text" name="customer_name" class="form-control">
+            <label class="form-label mt-3">Payment Method</label>
+            <select name="payment_method" class="form-select">
+                <option value="CASH">Cash</option>
+                <option value="CARD">Card</option>
+                <option value="UPI">UPI</option>
+            </select>
+        </div>
+
+        <div id="items">
+            <div class="card p-3 mb-3 item-row">
+                <label class="form-label">Product</label>
+                <select name="product_id" class="form-select product-select" required>
+                    <option value="">Choose product</option>
+                    {% for product in products %}
+                    <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.stock_quantity }}">
+                        {{ product.name }} ({{ product.sku }}) — ₹{{ product.price }} | Stock: {{ product.stock_quantity }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <label class="form-label mt-2">Quantity</label>
+                <input type="number" name="quantity" class="form-control quantity-input" min="1" value="1" required>
+            </div>
+        </div>
+
+        <button type="button" id="add-item" class="btn btn-outline-primary mb-3">+ Add Product</button>
+        <h4 class="mb-3">Estimated Total: ₹<span id="total">0.00</span></h4>
+        <button type="submit" class="btn btn-success w-100">Complete Sale & Generate Bill</button>
+    </form>
+    {% else %}
+        <div class="alert alert-info">No products in stock. Add products from the admin portal first.</div>
+    {% endif %}
+</div>
+
+<script>
+function updateTotal() {
+    let total = 0;
+    document.querySelectorAll(".item-row").forEach(row => {
+        const select = row.querySelector(".product-select");
+        const quantity = row.querySelector(".quantity-input");
+        const option = select.options[select.selectedIndex];
+        const price = Number(option?.dataset.price || 0);
+        const qty = Number(quantity.value || 0);
+        total += price * qty;
+    });
+    document.getElementById("total").textContent = total.toFixed(2);
+}
+
+document.getElementById("add-item")?.addEventListener("click", function () {
+    const first = document.querySelector(".item-row");
+    const clone = first.cloneNode(true);
+    clone.querySelector(".product-select").selectedIndex = 0;
+    clone.querySelector(".quantity-input").value = 1;
+    document.getElementById("items").appendChild(clone);
+    updateTotal();
+});
+
+document.addEventListener("input", updateTotal);
+document.addEventListener("change", updateTotal);
+</script>
+</body>
+</html>
